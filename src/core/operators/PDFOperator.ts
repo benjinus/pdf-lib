@@ -29,6 +29,14 @@ class PDFOperator {
     this.args = args || [];
   }
 
+  getName(): PDFOperatorNames {
+    return this.name;
+  }
+
+  getArgs(): PDFOperatorArg[] {
+    return this.args;
+  }
+
   clone(context?: PDFContext): PDFOperator {
     const args = new Array(this.args.length);
     for (let idx = 0, len = args.length; idx < len; idx++) {

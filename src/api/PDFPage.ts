@@ -52,6 +52,9 @@ import {
   assertRangeOrUndefined,
   assertIsOneOfOrUndefined,
 } from 'src/utils';
+import PDFOperatorNames from 'src/core/operators/PDFOperatorNames';
+import PDFNumber from 'src/core/objects/PDFNumber';
+import { asPDFName } from 'src/api/objects';
 
 /**
  * Represents a single page of a [[PDFDocument]].
@@ -835,6 +838,41 @@ export default class PDFPage {
    */
   pushOperators(...operator: PDFOperator[]): void {
     assertEachIs(operator, 'operator', [[PDFOperator, 'PDFOperator']]);
+
+    if (operator && operator.length) {
+      for (let i = 0; i < operator.length; i++) {
+        const op = operator[i];
+        const args = op.getArgs();
+        if (PDFOperatorNames.SetGraphicsStateParams === op.getName() && args.length && args.length === 3) {
+
+          let opacity = 1;
+          if (args[0] instanceof PDFNumber) {
+            opacity = (args[0] as PDFNumber).asNumber();
+          }
+
+          let borderOpacity = 1;
+          if (args[1] instanceof PDFNumber) {
+            borderOpacity = (args[1] as PDFNumber).asNumber();
+          }
+
+          let blendMode = BlendMode.Normal;
+          if (args[2] instanceof PDFName) {
+            blendMode = ((args[2] as PDFName).asString()) as BlendMode;
+          }
+
+          const graphicsStateKey = this.maybeEmbedGraphicsState({
+            opacity,
+            borderOpacity,
+            blendMode,
+          });
+
+          if (graphicsStateKey) {
+            operator[i] = PDFOperator.of(PDFOperatorNames.SetGraphicsStateParams, [asPDFName(graphicsStateKey)]);
+          } else operator.splice(i, 1);
+        }
+      }
+    }
+
     const contentStream = this.getContentStream();
     contentStream.push(...operator);
   }

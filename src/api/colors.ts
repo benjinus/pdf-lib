@@ -7,6 +7,9 @@ import {
   setStrokingRgbColor,
 } from 'src/api/operators';
 import { assertRange, error } from 'src/utils';
+import { BlendMode } from 'src/api/PDFPageOptions';
+import { PDFOperator, PDFOperatorNames as Ops } from 'src/core';
+import { asPDFName, asPDFNumber } from 'src/api/objects';
 
 export enum ColorTypes {
   Grayscale = 'Grayscale',
@@ -76,3 +79,11 @@ export const setStrokingColor = (color: Color) =>
   : color.type === RGB       ? setStrokingRgbColor(color.red, color.green, color.blue)
   : color.type === CMYK      ? setStrokingCmykColor(color.cyan, color.magenta, color.yellow, color.key)
   : error(`Invalid color: ${JSON.stringify(color)}`);
+
+// prettier-ignore
+export const setOpacity = (opacity: number, borderOpacity: number, blendMode: BlendMode) =>
+  PDFOperator.of(Ops.SetGraphicsStateParams, [
+    asPDFNumber(opacity),
+    asPDFNumber(borderOpacity),
+    asPDFName(blendMode),
+  ]);
